@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.2.1/themes/default/style.min.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://arma.zone/Public/js/treeview.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.17.1/min/vs/loader.js"></script>
+	<script src="https://ajaxorg.github.io/ace-builds/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+	<script src="/Public/js/pbo.js"></script>
+    <title>Arma.Zone PBO Manager</title>
+	
+	<style>
+		.sidebar {
+			position: absolute;
+			width: 20vw;
+			height: 100vh;
+			top: 0;
+			left: 0;
+		}
+		#tree {
+			width: 20vw;
+			height: 100vh;
+			overflow: auto;
+		}
+		
+        .treeview .list-group-item {
+            cursor: pointer;
+        }
+
+        .treeview span.indent {
+            margin-left: 10px;
+            margin-right: 10px;
+        }
+
+        .treeview span.icon {
+            width: 12px;
+            margin-right: 5px;
+        }
+
+        .treeview .node-disabled {
+            color: silver;
+            cursor: not-allowed;
+        }
+		
+		#editor {
+			position: absolute;
+			top: 0;
+			right: 0;
+			height:100vh;
+			width: 80vw;
+			
+		}
+		
+		.list-group-item {
+			padding: 5px 10px 5px 10px!important;
+			border: none;
+		}
+    </style>
+	
+</head>
+<body>
+    <div class="sidebar">	
+		<div id="file-select">
+			<label>Open or drag and drop a PBO file</label>
+			<input class="form-control" style="height: 100%;" type="file">
+		</div>
+		<div id="result"></div>
+	</div>
+
+    <div id="tree"></div>
+	
+	<div>
+	<div id="editor"></div>
+	</div>
+
+    <script>
+     
+
+	function arrangeIntoTree(entries, cb) {
+		var tree = [];
+
+		// This example uses the underscore.js library.
+		_.each(entries, function(entry) {
+			//console.log("entry", entry);
+			var pathParts = entry.name.split('\\');
+			pathParts.shift(); // Remove first blank element from the parts array.
+
+			var currentLevel = tree; // initialize currentLevel to root
+
+			_.each(pathParts, function(part) {
+
+				// check to see if the path already exists.
+				var existingPath = _.findWhere(currentLevel, {
+					text: part
+				});
+
+				if (existingPath) {
+					// The path to this item was already in the tree, so don't add it again.
+					// Set the current level to this path's nodes
+					currentLevel = existingPath.nodes;
+				} else {
+					var newPart = {
+						text: part,
+						nodes: [],
+						data: entry.data
+					}
+
+					currentLevel.push(newPart);
+					currentLevel = newPart.nodes;
+				}
+			});
+		});
+
+		cb(tree);
+	}
+
+
+
+	document.querySelector('input').addEventListener('change', function() {
+		$("#file-select").css("display", "none");
+
+		var reader = new FileReader();
+		reader.onload = function() {
+
+
+			let buffer = this.result;
+			let handler = new pbo(buffer);
+			let data = handler.parsePbo();
+			let files = data.files;
+
+			// for the tree
+			for (let file of files) {
+				file.name = "\\" + file.name;
+			}
+
+			console.log(data);
+
+			arrangeIntoTree(files, function(tree) {
+				$("#tree").treeview({
+					data: tree,
+					onNodeSelected: function(event, node) {
+						if (node.nodes.length > 0) {
+							$('#tree').treeview('toggleNodeExpanded', node.nodeId, { silent: true } );
+						} else {
+							editor.setValue(node.data);
+						}
+					}
+				});
+				$("#tree").treeview('collapseAll');
+			});
+
+
+		}
+		reader.readAsArrayBuffer(this.files[0]);
+
+	}, false);
+
+		var editor = ace.edit("editor");
+		editor.getSession().setUseWorker(false);
+		editor.setTheme("ace/theme/monokai");
+		editor.getSession().setMode("ace/mode/javascript");
+
+		$('#mode').on('change', function (ev) {
+			var mode = $('option:selected').attr('value');
+			//console.log(mode)
+			editor.getSession().setMode(mode);
+		});
+
+    </script>
+    
+</body>
+</html>

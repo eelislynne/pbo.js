@@ -1,0 +1,54 @@
+<input class="form-control" type="file">
+
+<script>
+document.querySelector('input').addEventListener('change', function() {
+
+    var reader = new FileReader();
+    reader.onload = function() {
+
+        // get the buffer of the file
+        let buffer = this.result;
+
+        // init the pbo class with that buffer
+        let handler = new pbo(buffer);
+
+        // parse the pbo
+        let data = handler.parsePbo();
+
+        // get the header
+        let entry = data.entry;
+        /*
+        entry.filename: string;
+        entry.method: string; // len of 4
+        entry.originalSize: number;
+        entry.reserved: number;
+        entry.timestamp: number;
+        entry.dataSize: number;
+        */
+        
+
+        // get the extensions (if any)
+        let extensions = data.extensions;
+        /*
+            extensions: string[];
+        */
+
+
+        // get the files
+        let files = data.files;
+        /*
+            name: string;
+            size: number;
+            originalSize: number;
+            timestamp: number;
+            packing: number;
+            data: string;
+        */
+
+        console.log(data);
+
+    }
+    reader.readAsArrayBuffer(this.files[0]);
+
+}, false);
+</script>
