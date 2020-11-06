@@ -12,6 +12,7 @@ A JavaScript library using memory for packing and unpacking Arma's .pbo files.
     - None!
 
 ## Installation
+- NOTE: NPM support not implemented yet.
 - With NPM
     1. Run command `npm i --save pbo.js`
     2. Done!
@@ -28,6 +29,7 @@ This is to include the files into your project for use. <br />
 ## Functions
 ### pbo(buffer)
 The first and only parameter is the buffer of the pbo to be used.
+- NOTE: Node.JS support not tested yet.
 #### Node.JS
 ```javascript
 let handler = new pbojs.pbo(buffer)
